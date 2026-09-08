@@ -1,0 +1,69 @@
+# Flutter Fresher Technical Interview Study Guide
+
+This guide breaks down every architectural pattern, internal Flutter engine behavior, and common technical round question demonstrated in the To-Do List codebase.
+
+---
+
+## 1. Codebase Architecture Breakdown
+
+### `main()` & `runApp()`
+* **`main()`**: Dart entry point running on the root isolate.
+* **`runApp(Widget app)`**: Takes the root widget, wraps it in a `RenderObjectToWidgetAdapter`, builds the root element (`RenderObjectToWidgetElement`), and mounts it to the screen's root `RenderView`.
+
+### Data Model Layer (`TodoItem`)
+* Keeps model logic clean and uncoupled from UI styling.
+* Generates a stable unique identity (`id`) via timestamp string. Never rely purely on list array indices for identity in dynamic lists.
+
+### `StatelessWidget` vs `StatefulWidget`
+* **`TodoApp` (StatelessWidget)**: Immutable configuration. Does not manage changing state.
+* **`TodoListScreen` (StatefulWidget)**: Separates the configuration (`StatefulWidget`) from the long-lived state container (`State`).
+
+---
+
+## 2. Key Concepts & Engine Mechanics
+
+### The Three Trees
+Flutter coordinates three parallel trees to achieve high rendering performance:
+1. **Widget Tree**: Lightweight, immutable blueprints created and discarded frequently.
+2. **Element Tree**: The structural backbone (runtime instances). Retains lifecycle and ties widgets to corresponding rendering objects.
+3. **RenderObject Tree**: Heavyweight objects managing layout calculation, paint operations, hit testing, and compositing to the GPU.
+
+### The `setState()` Mechanism
+* Does **not** instantly re-render the screen.
+* Sets `_element.markNeedsBuild()`, adding the element to the engine's list of "dirty" elements.
+* The Flutter Engine schedules a new build frame via the VSync signal from the OS display refresh loop (60Hz/120Hz).
+* During that frame, only dirty elements call their `build()` methods to reconcile subtrees.
+
+### Virtualization via `ListView.builder`
+* **Standard `ListView(children: [...])`**: Instantiates and lays out all children upfront in memory. If the list contains 5,000 items, 5,000 widgets and render boxes exist simultaneously.
+* **`ListView.builder`**: Uses a lazy-delegate pattern (`SliverChildBuilderDelegate`). It instantiates, measures, and paints **only** items currently within (or just slightly outside) the viewport cache extent ($O(1)$ memory usage relative to total items).
+
+### Keys in Flutter
+* **Purpose**: Preserves element identity when items move, reorder, or delete within a widget collection.
+* **Why `ValueKey(item.id)` instead of `ValueKey(index)` in `Dismissible`?**
+  If you swipe item index 0 away, the item originally at index 1 shifts to index 0. If keyed by `index`, the Element tree assumes index 0 was never removed—leading to broken swipe animations, orphaned checkmark states, and UI race conditions.
+
+### Memory Lifecycle & `dispose()`
+* `TextEditingController` attaches listeners to the platform message channel (communicating with the native Android/iOS keyboard subsystem).
+* If not explicitly released inside `dispose()`, the listener remains bound in memory even after popping the route, causing memory leaks over time.
+
+---
+
+## 3. High-Frequency Technical Round Q&As
+
+### Q1: What is the difference between Hot Reload and Hot Restart?
+* **Hot Reload**: Injects updated Dart source code into the running Dart Virtual Machine (VM). It updates widget build functions without resetting the runtime state variables held by `State` instances.
+* **Hot Restart**: Destroys the existing State instances, recompiles code, and re-executes `main()` from scratch. Resets all in-memory variables.
+
+### Q2: Why is StatefulWidget split into two classes (`StatefulWidget` and `State`)?
+* **Performance optimization**: `StatefulWidget` instances are immutable and get rebuilt and garbage-collected frequently by parents. The `State` object is persistent and tied to an `Element` in the Element tree. Splitting them keeps state preservation cheap without recreating the state data on each rebuild.
+
+### Q3: What is `BuildContext`?
+* `BuildContext` is essentially the `Element` itself representing that specific widget's position within the widget tree. It provides contextual access to ancestors (e.g., `Theme.of(context)`, `ScaffoldMessenger.of(context)`, `Navigator.of(context)`).
+
+### Q4: What does the `const` keyword do in constructors?
+* Canonicalizes the widget instance at compile time. Flutter stores it in a unified lookup table and reuses the exact same memory instance across parent rebuilds, preventing unnecessary calls to `build()` on unchanged subtrees.
+
+### Q5: What is the difference between `Navigator.push()` and `Navigator.pushReplacement()`?
+* `push()` adds a new route on top of the navigation stack.
+* `pushReplacement()` removes the active route and replaces it with the incoming route, preventing the user from navigating back to the discarded screen.
