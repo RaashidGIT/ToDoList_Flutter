@@ -11,15 +11,16 @@ A modern, responsive To-Do application built with Flutter, Material 3, and Flutt
 * **Optimistic UI with Failure Rollback**: Toggle completion and swipe-to-delete update UI instantly, rolling back to previous state if the remote request fails.
 * **Undo Pattern**: Non-blocking `SnackBar` action that restores tasks locally and synchronizes re-creation back to the server without stale closure leaks.
 * **Granular Filtering & Live Search**:
-* Filter by **All**, **Active**, and **Done** with dynamic count badges via `SegmentedButton`.
-* Real-time search bar integrated into the `AppBar`.
-* Multi-condition derived provider caching query results.
+  * Filter by **All**, **Active**, and **Done** with dynamic count badges via `SegmentedButton`.
+  * Real-time search bar integrated into the `AppBar`.
+  * Multi-condition derived provider caching query results.
+
 
 
 * **Task Metadata**:
-* Date and time scheduling via combined `showDatePicker` and `showTimePicker`.
-* Visual category badges (**Work**, **Personal**, **Study**) styled using `ChoiceChip` widgets.
-* Overdue indicators for pending tasks past their target deadline.
+  * Date and time scheduling via combined `showDatePicker` and `showTimePicker`.
+  * Visual category badges (**Work**, **Personal**, **Study**) styled using `ChoiceChip` widgets.
+  * Overdue indicators for pending tasks past their target deadline.
 
 
 * **Modular UI Architecture**: Split into atomic, reusable widgets (`TodoItemCard`, `TodoFilterBar`, `TodoErrorView`, `AddTodoDialog`).
