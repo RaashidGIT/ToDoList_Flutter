@@ -1,4 +1,4 @@
-# Production-Ready Flutter To-Do & Task Manager
+# To-Do List App (Flutter)
 
 A modern, responsive To-Do application built with Flutter, Material 3, and Flutter Riverpod (`AsyncNotifier`). Demonstrates clean architectural patterns, robust local and remote state management, optimistic UI updates with automatic rollback, and resilient network error handling.
 
